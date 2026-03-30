@@ -17,7 +17,7 @@
             --text-muted: #a0a0a0;
             --danger: #ff4c4c;
             --success: #00e676;
-            --nav-height: 60px;
+            --nav-height: 65px;
         }
 
         * {
@@ -141,6 +141,31 @@
             border: 1px solid #333;
         }
 
+        /* NDA Section Styling */
+        .nda-paper {
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+        .nda-paper h3 {
+            color: var(--primary-color);
+            text-transform: uppercase;
+            font-size: 1em;
+            margin-top: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        .nda-paper p, .nda-paper li {
+            margin-bottom: 10px;
+        }
+        .nda-paper ul {
+            padding-left: 20px;
+        }
+
         /* Shop Cards */
         .product-card {
             background: var(--surface-color);
@@ -186,7 +211,7 @@
         .chat-box {
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 160px);
+            height: calc(100vh - 200px);
         }
         .chat-messages {
             flex: 1;
@@ -244,7 +269,7 @@
         .nav-item {
             color: var(--text-muted);
             text-align: center;
-            font-size: 0.8em;
+            font-size: 0.7em;
             cursor: pointer;
             flex: 1;
             padding: 5px 0;
@@ -252,7 +277,7 @@
         }
         .nav-item i {
             display: block;
-            font-size: 1.4em;
+            font-size: 1.2em;
             margin-bottom: 3px;
         }
         .nav-item.active {
@@ -329,16 +354,45 @@
         </div>
     </div>
 
+    <div id="view-nda" class="view">
+        <h2>Naše domluva</h2>
+        <div class="nda-paper">
+            <p><strong>Smlouva o mlčenlivosti (NDA)</strong></p>
+            <p>Tato smlouva je uzavřena mezi společností <strong>Laboratory B.V.</strong> (Nizozemsko) a Vámi jako přijímající stranou.</p>
+
+            <h3>1. Definice důvěrných informací</h3>
+            <p>Důvěrné informace znamenají jakékoli informace poskytnuté zveřejňující stranou, ať už přímo či nepřímo, písemně, ústně nebo inspekcí hmotných předmětů.</p>
+
+            <h3>2. Povinnosti přijímající strany</h3>
+            <ul>
+                <li>Uchovávat veškeré důvěrné informace v přísné tajnosti.</li>
+                <li>Neposkytovat tyto informace žádným třetím stranám bez předchozího písemného souhlasu.</li>
+                <li>Nepoužívat informace pro žádný jiný účel než pro dohodnuté obchodní účely.</li>
+            </ul>
+
+            <h3>3. Výjimky</h3>
+            <p>Důvěrné informace nezahrnují údaje, které jsou nebo se stanou veřejně dostupnými bez porušení této smlouvy, byly přijímající straně známy již před zveřejněním nebo byly vyvinuty nezávisle.</p>
+
+            <h3>4. Doba trvání a vrácení</h3>
+            <p>Tato smlouva zůstává v platnosti po dobu <strong>3 let</strong> od data podpisu. Na vyžádání musí být veškeré materiály vráceny nebo zničeny.</p>
+
+            <h3>5. Rozhodné právo</h3>
+            <p>Tato smlouva se řídí a vykládá v souladu s právními předpisy <strong>Nizozemska</strong>.</p>
+            
+            <div style="margin-top: 20px; padding-top: 10px; border-top: 1px dashed #444; font-style: italic; font-size: 0.8em; text-align: center;">
+                Elektronicky potvrzeno v rámci LabApp systému.
+            </div>
+        </div>
+    </div>
+
     <div id="view-shop" class="view">
         <h2>Laboratorní produkty</h2>
-        <div id="products-container">
-            </div>
+        <div id="products-container"></div>
     </div>
 
     <div id="view-cart" class="view">
         <h2>Nákupní košík</h2>
-        <div id="cart-container">
-            </div>
+        <div id="cart-container"></div>
         
         <div id="cart-summary" style="display: none;">
             <div class="cart-total">
@@ -367,6 +421,10 @@
             <i class="fa-solid fa-chart-line"></i>
             Domů
         </div>
+        <div class="nav-item" onclick="switchTab('nda')">
+            <i class="fa-solid fa-file-signature"></i>
+            Domluva
+        </div>
         <div class="nav-item" onclick="switchTab('shop')">
             <i class="fa-solid fa-flask-vial"></i>
             E-shop
@@ -387,7 +445,6 @@
     /* --- DATA & STATE --- */
     let currentUser = null;
     let cart = [];
-    let chartsInit = false;
     let sharesChartInstance = null;
     let earningsChartInstance = null;
 
@@ -400,7 +457,6 @@
 
     /* --- INITIALIZATION --- */
     window.onload = () => {
-        // Kontrola přihlášení
         const savedSession = localStorage.getItem('labAppActiveUser');
         if (savedSession) {
             currentUser = JSON.parse(savedSession);
@@ -418,47 +474,27 @@
         setTimeout(() => alertBox.style.display = 'none', 3000);
     }
 
-    function getDb() {
-        return JSON.parse(localStorage.getItem('labAppUsers') || '{}');
-    }
-
-    function saveDb(db) {
-        localStorage.setItem('labAppUsers', JSON.stringify(db));
-    }
+    function getDb() { return JSON.parse(localStorage.getItem('labAppUsers') || '{}'); }
+    function saveDb(db) { localStorage.setItem('labAppUsers', JSON.stringify(db)); }
 
     function register() {
         const phone = document.getElementById('phone').value.trim();
         const pwd = document.getElementById('password').value.trim();
-        
         if (!phone || !pwd) return showAlert('Vyplňte telefon i heslo.');
-
         let db = getDb();
         if (db[phone]) return showAlert('Toto číslo je již registrováno.');
-
-        // Nový uživatel (simulace data registrace náhodně před 1-30 dny pro demo efekt, nebo právě teď)
-        // Pro lepší efekt v grafu posuneme datum registrace o pár dní zpět.
         const demoPastMs = Math.floor(Math.random() * 15 + 5) * 24 * 60 * 60 * 1000; 
-        
-        db[phone] = { 
-            password: pwd, 
-            regDate: Date.now() - demoPastMs
-        };
+        db[phone] = { password: pwd, regDate: Date.now() - demoPastMs };
         saveDb(db);
-
         loginUser(phone, db[phone]);
     }
 
     function login() {
         const phone = document.getElementById('phone').value.trim();
         const pwd = document.getElementById('password').value.trim();
-        
         if (!phone || !pwd) return showAlert('Vyplňte telefon i heslo.');
-
         let db = getDb();
-        if (!db[phone] || db[phone].password !== pwd) {
-            return showAlert('Nesprávné číslo nebo heslo.');
-        }
-
+        if (!db[phone] || db[phone].password !== pwd) return showAlert('Nesprávné číslo nebo heslo.');
         loginUser(phone, db[phone]);
     }
 
@@ -473,9 +509,8 @@
     function logout() {
         localStorage.removeItem('labAppActiveUser');
         currentUser = null;
-        cart = []; // Vymazat košík při odhlášení
+        cart = [];
         updateCartBadge();
-        
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.getElementById('view-auth').classList.add('active');
         document.getElementById('bottom-nav').style.display = 'none';
@@ -485,10 +520,9 @@
     function switchTab(tab) {
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.getElementById(`view-${tab}`).classList.add('active');
-
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
+        // Find the clicked element via event
+        if(event) event.currentTarget.classList.add('active');
         if (tab === 'dashboard') initCharts();
         if (tab === 'cart') renderCart();
     }
@@ -497,219 +531,109 @@
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.getElementById('view-dashboard').classList.add('active');
         document.getElementById('bottom-nav').style.display = 'flex';
-        
-        // Reset nav icons
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.querySelector('.nav-item:nth-child(1)').classList.add('active');
-
-        // Stats calculation
         document.getElementById('dash-phone').textContent = currentUser.phone;
         const days = Math.floor((Date.now() - currentUser.regDate) / (1000 * 60 * 60 * 24));
         document.getElementById('dash-days').textContent = days;
-        
-        // Výdělek roste konzistentně s dny (simulace: 150 Kč za den + základ 500)
         const earnings = 500 + (days * 150);
         document.getElementById('dash-earnings').textContent = earnings.toLocaleString('cs-CZ');
-
-        // Init charts po malém zpoždění pro renderování DOM
         setTimeout(initCharts, 100);
     }
 
-    /* --- CHARTS (Chart.js) --- */
+    /* --- CHARTS --- */
     function initCharts() {
         Chart.defaults.color = '#a0a0a0';
-        Chart.defaults.font.family = "'Segoe UI', Roboto, sans-serif";
-
         const days = Math.floor((Date.now() - currentUser.regDate) / (1000 * 60 * 60 * 24));
-
-        // Zničení starých instancí, pokud existují
         if (sharesChartInstance) sharesChartInstance.destroy();
         if (earningsChartInstance) earningsChartInstance.destroy();
 
-        // 1. Graf vývoje akcií (generická rostoucí křivka)
-        const ctxShares = document.getElementById('sharesChart').getContext('2d');
-        sharesChartInstance = new Chart(ctxShares, {
+        sharesChartInstance = new Chart(document.getElementById('sharesChart').getContext('2d'), {
             type: 'line',
             data: {
                 labels: ['Q1 22', 'Q3 22', 'Q1 23', 'Q3 23', 'Q1 24', 'Nyní'],
-                datasets: [{
-                    label: 'Hodnota (Kč/akcie)',
-                    data: [120, 145, 130, 210, 280, 315],
-                    borderColor: '#00d2ff',
-                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: [{ label: 'Kč/akcie', data: [120, 145, 130, 210, 280, 315], borderColor: '#00d2ff', fill: true, backgroundColor: 'rgba(0, 210, 255, 0.1)', tension: 0.4 }]
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: false, grid: { color: '#333' } }, x: { grid: { color: '#333' } } }
-            }
+            options: { responsive: true, plugins: { legend: { display: false } } }
         });
 
-        // 2. Graf výdělku uživatele
-        const earnData = [];
-        const earnLabels = [];
+        const earnData = []; const earnLabels = [];
         for (let i = 0; i <= days; i += Math.max(1, Math.floor(days/5))) {
-            earnLabels.push(`Den ${i}`);
-            earnData.push(500 + (i * 150));
+            earnLabels.push(`D ${i}`); earnData.push(500 + (i * 150));
         }
-        
-        const ctxEarnings = document.getElementById('earningsChart').getContext('2d');
-        earningsChartInstance = new Chart(ctxEarnings, {
+        earningsChartInstance = new Chart(document.getElementById('earningsChart').getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: earnLabels,
-                datasets: [{
-                    label: 'Výdělek (Kč)',
-                    data: earnData,
-                    backgroundColor: '#00e676',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, grid: { color: '#333' } }, x: { grid: { display: false } } }
-            }
+            data: { labels: earnLabels, datasets: [{ label: 'Kč', data: earnData, backgroundColor: '#00e676' }] },
+            options: { responsive: true, plugins: { legend: { display: false } } }
         });
     }
 
     /* --- SHOP & CART --- */
     function renderShop() {
         const container = document.getElementById('products-container');
-        container.innerHTML = '';
-        
-        products.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <img src="${p.img}" alt="${p.name}" class="product-img">
+        container.innerHTML = products.map(p => `
+            <div class="product-card">
+                <img src="${p.img}" class="product-img">
                 <div class="product-info">
                     <h3>${p.name}</h3>
                     <div class="product-price">${p.price} Kč</div>
                     <button onclick="addToCart(${p.id})">Přidat do košíku</button>
                 </div>
-            `;
-            container.appendChild(card);
-        });
+            </div>
+        `).join('');
     }
 
     function addToCart(id) {
-        const product = products.find(p => p.id === id);
-        cart.push(product);
+        cart.push(products.find(p => p.id === id));
         updateCartBadge();
-        
-        // Malý feedback
         const btn = event.currentTarget;
-        const oldText = btn.innerText;
-        btn.innerText = "Přidáno ✓";
-        btn.style.background = "var(--success)";
-        setTimeout(() => {
-            btn.innerText = oldText;
-            btn.style.background = "";
-        }, 1000);
+        btn.innerText = "Přidáno ✓"; btn.style.background = "var(--success)";
+        setTimeout(() => { btn.innerText = "Přidat do košíku"; btn.style.background = ""; }, 1000);
     }
 
     function updateCartBadge() {
         const badge = document.getElementById('cart-badge');
-        if (cart.length > 0) {
-            badge.style.display = 'inline-block';
-            badge.textContent = cart.length;
-        } else {
-            badge.style.display = 'none';
-        }
+        badge.style.display = cart.length > 0 ? 'inline-block' : 'none';
+        badge.textContent = cart.length;
     }
 
     function renderCart() {
         const container = document.getElementById('cart-container');
         const summary = document.getElementById('cart-summary');
-        const msg = document.getElementById('order-msg');
-        
-        msg.style.display = 'none';
-        container.innerHTML = '';
-
         if (cart.length === 0) {
-            container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-basket-shopping" style="font-size: 3em; margin-bottom:10px;"></i><p>Váš košík je prázdný.</p></div>';
-            summary.style.display = 'none';
-            return;
+            container.innerHTML = '<div class="empty-state">Košík je prázdný.</div>';
+            summary.style.display = 'none'; return;
         }
-
         let total = 0;
-        cart.forEach((p, index) => {
+        container.innerHTML = cart.map((p, i) => {
             total += p.price;
-            const item = document.createElement('div');
-            item.className = 'cart-item';
-            item.innerHTML = `
-                <div>
-                    <strong>${p.name}</strong><br>
-                    <span style="color: var(--success);">${p.price} Kč</span>
-                </div>
-                <button class="danger" style="width: auto; padding: 8px 15px; margin: 0;" onclick="removeFromCart(${index})">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            `;
-            container.appendChild(item);
-        });
-
+            return `<div class="cart-item"><div><strong>${p.name}</strong><br>${p.price} Kč</div><button class="danger" style="width:auto" onclick="removeFromCart(${i})"><i class="fa-solid fa-trash"></i></button></div>`;
+        }).join('');
         document.getElementById('cart-total-price').textContent = total.toLocaleString('cs-CZ');
         summary.style.display = 'block';
     }
 
-    function removeFromCart(index) {
-        cart.splice(index, 1);
-        updateCartBadge();
-        renderCart();
-    }
+    function removeFromCart(i) { cart.splice(i, 1); updateCartBadge(); renderCart(); }
 
     function submitOrder() {
-        const msg = document.getElementById('order-msg');
-        msg.textContent = "Objednávka přijata. Odhadovaná doba doručení: 14–28 dní.";
-        msg.style.display = 'block';
-        
-        // Vyprázdnění košíku
-        cart = [];
-        updateCartBadge();
-        
-        // Překreslení po 3 sekundách
-        setTimeout(() => {
-            renderCart();
-        }, 3000);
+        document.getElementById('order-msg').style.display = 'block';
+        document.getElementById('order-msg').textContent = "Objednávka přijata. Odhadovaná doba doručení: 14–28 dní.";
+        cart = []; updateCartBadge(); setTimeout(renderCart, 3000);
     }
 
-    /* --- SUPPORT CHAT --- */
-    function handleChatEnter(e) {
-        if (e.key === 'Enter') sendMsg();
-    }
-
+    /* --- SUPPORT --- */
+    function handleChatEnter(e) { if (e.key === 'Enter') sendMsg(); }
     function sendMsg() {
         const input = document.getElementById('chat-input');
-        const text = input.value.trim();
-        if (!text) return;
-
-        const chatBox = document.getElementById('chat-messages');
-        
-        // User message
-        const userDiv = document.createElement('div');
-        userDiv.className = 'msg user';
-        userDiv.textContent = text;
-        chatBox.appendChild(userDiv);
-        
-        input.value = '';
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        // Bot simulation
+        if (!input.value.trim()) return;
+        const chat = document.getElementById('chat-messages');
+        chat.innerHTML += `<div class="msg user">${input.value}</div>`;
+        input.value = ''; chat.scrollTop = chat.scrollHeight;
         setTimeout(() => {
-            const botDiv = document.createElement('div');
-            botDiv.className = 'msg bot';
-            botDiv.innerHTML = 'Děkujeme za dotaz. Operátor se vám bude věnovat co nejdříve. <br><br><i>(Toto je automatická odpověď demo verze)</i>';
-            chatBox.appendChild(botDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            chat.innerHTML += `<div class="msg bot">Děkujeme za dotaz. Operátor se vám bude věnovat co nejdříve.</div>`;
+            chat.scrollTop = chat.scrollHeight;
         }, 1000);
     }
-
 </script>
 </body>
 </html>
