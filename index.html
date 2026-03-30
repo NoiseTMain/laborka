@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LabApp - Mobile Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --surface-light: #2c2c2c;
+            --primary-color: #00d2ff;
+            --primary-dark: #3a7bd5;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --danger: #ff4c4c;
+            --success: #00e676;
+            --nav-height: 60px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #000;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Mobile Container */
+        #app {
+            width: 100%;
+            max-width: 400px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            padding: 20px;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            flex: 1;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        /* Forms & Inputs */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--surface-light);
+            border: 1px solid #333;
+            color: var(--text-main);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            color: white;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: opacity 0.2s;
+        }
+        button:active {
+            opacity: 0.8;
+        }
+        button.secondary {
+            background: var(--surface-light);
+            color: var(--text-main);
+        }
+        button.danger {
+            background: var(--danger);
+        }
+
+        /* Dashboard specific */
+        .card-stat {
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .stat-value {
+            font-size: 2em;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .chart-container {
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        /* Shop Cards */
+        .product-card {
+            background: var(--surface-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .product-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-price {
+            color: var(--success);
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Cart Items */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .cart-total {
+            font-size: 1.5em;
+            text-align: right;
+            margin: 20px 0;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        /* Chat UI */
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 160px);
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        .msg.bot {
+            background: var(--surface-light);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+        .msg.user {
+            background: var(--primary-dark);
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input input {
+            flex: 1;
+        }
+        .chat-input button {
+            width: auto;
+            padding: 0 20px;
+            margin: 0;
+        }
+
+        /* Bottom Nav */
+        #bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 400px;
+            height: var(--nav-height);
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #333;
+            display: none; /* Hidden on auth screen */
+            z-index: 100;
+        }
+        .nav-item {
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 0.8em;
+            cursor: pointer;
+            flex: 1;
+            padding: 5px 0;
+            transition: color 0.2s;
+        }
+        .nav-item i {
+            display: block;
+            font-size: 1.4em;
+            margin-bottom: 3px;
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+        
+        /* Messages / Alerts */
+        .alert {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+        }
+        .alert.error { background: rgba(255, 76, 76, 0.2); color: var(--danger); border: 1px solid var(--danger); display: block;}
+        .alert.success { background: rgba(0, 230, 118, 0.2); color: var(--success); border: 1px solid var(--success); display: block;}
+
+        .empty-state { text-align: center; color: var(--text-muted); margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    
+    <div id="view-auth" class="view active">
+        <div style="text-align: center; margin: 50px 0;">
+            <i class="fa-solid fa-flask" style="font-size: 4em; color: var(--primary-color);"></i>
+            <h1 style="margin-top: 10px;">LabApp</h1>
+            <p style="color: var(--text-muted);">Přihlaste se nebo se registrujte</p>
+        </div>
+
+        <div id="auth-alert" class="alert" style="display: none;"></div>
+
+        <div class="input-group">
+            <label for="phone">Telefonní číslo</label>
+            <input type="tel" id="phone" placeholder="+420 123 456 789">
+        </div>
+        <div class="input-group">
+            <label for="password">Heslo</label>
+            <input type="password" id="password" placeholder="••••••••">
+        </div>
+
+        <button onclick="login()">Přihlásit se</button>
+        <button class="secondary" onclick="register()">Registrovat</button>
+    </div>
+
+    <div id="view-dashboard" class="view">
+        <h2 style="display: flex; justify-content: space-between; align-items: center;">
+            Přehled
+            <i class="fa-solid fa-right-from-bracket" style="font-size: 0.6em; color: var(--danger); cursor: pointer;" onclick="logout()"></i>
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Vítejte, <span id="dash-phone"></span></p>
+
+        <div class="card-stat">
+            <p>Vlastnictví akcií</p>
+            <div class="stat-value">10 %</div>
+            <p style="color: var(--text-muted); font-size: 0.8em;">Dny od registrace: <span id="dash-days"></span></p>
+        </div>
+
+        <div class="card-stat">
+            <p>Váš generovaný výdělek</p>
+            <div class="stat-value" style="color: var(--success);"><span id="dash-earnings">0</span> Kč</div>
+            <p style="color: var(--text-muted); font-size: 0.8em;">Aktualizováno denně</p>
+        </div>
+
+        <h3 style="margin-top: 30px; font-size: 1.1em;">Vývoj hodnoty akcií (2 roky)</h3>
+        <div class="chart-container">
+            <canvas id="sharesChart"></canvas>
+        </div>
+
+        <h3 style="margin-top: 20px; font-size: 1.1em;">Váš výdělek od registrace</h3>
+        <div class="chart-container">
+            <canvas id="earningsChart"></canvas>
+        </div>
+    </div>
+
+    <div id="view-shop" class="view">
+        <h2>Laboratorní produkty</h2>
+        <div id="products-container">
+            </div>
+    </div>
+
+    <div id="view-cart" class="view">
+        <h2>Nákupní košík</h2>
+        <div id="cart-container">
+            </div>
+        
+        <div id="cart-summary" style="display: none;">
+            <div class="cart-total">
+                Celkem: <span id="cart-total-price">0</span> Kč
+            </div>
+            <div id="order-msg" class="alert success" style="display: none;"></div>
+            <button onclick="submitOrder()">Odeslat objednávku</button>
+        </div>
+    </div>
+
+    <div id="view-support" class="view">
+        <h2>Okamžitá podpora</h2>
+        <div class="chat-box">
+            <div class="chat-messages" id="chat-messages">
+                <div class="msg bot">Dobrý den, jak vám můžeme pomoci s vašimi laboratorními vzorky?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Napište zprávu..." onkeypress="handleChatEnter(event)">
+                <button onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('dashboard')">
+            <i class="fa-solid fa-chart-line"></i>
+            Domů
+        </div>
+        <div class="nav-item" onclick="switchTab('shop')">
+            <i class="fa-solid fa-flask-vial"></i>
+            E-shop
+        </div>
+        <div class="nav-item" onclick="switchTab('cart')">
+            <i class="fa-solid fa-cart-shopping"></i>
+            Košík <span id="cart-badge" style="display:none; background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8em; position: absolute; top: 2px; margin-left: -5px;">0</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('support')">
+            <i class="fa-solid fa-headset"></i>
+            Podpora
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* --- DATA & STATE --- */
+    let currentUser = null;
+    let cart = [];
+    let chartsInit = false;
+    let sharesChartInstance = null;
+    let earningsChartInstance = null;
+
+    const products = [
+        { id: 1, name: "Konopný extrakt 10% CBD", price: 850, img: "https://images.unsplash.com/photo-1611078822909-51c3d82deec3?w=400&q=80" },
+        { id: 2, name: "Botanický vzorek - Meduňka", price: 120, img: "https://images.unsplash.com/photo-1596541544414-b8b0e7960fc6?w=400&q=80" },
+        { id: 3, name: "Laboratorní zkumavky (Sada 10ks)", price: 450, img: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=400&q=80" },
+        { id: 4, name: "Organické činidlo typ B", price: 1250, img: "https://images.unsplash.com/photo-1582719471324-419b16867323?w=400&q=80" }
+    ];
+
+    /* --- INITIALIZATION --- */
+    window.onload = () => {
+        // Kontrola přihlášení
+        const savedSession = localStorage.getItem('labAppActiveUser');
+        if (savedSession) {
+            currentUser = JSON.parse(savedSession);
+            showDashboard();
+        }
+        renderShop();
+    };
+
+    /* --- AUTHENTICATION --- */
+    function showAlert(msg, isSuccess = false) {
+        const alertBox = document.getElementById('auth-alert');
+        alertBox.textContent = msg;
+        alertBox.className = 'alert ' + (isSuccess ? 'success' : 'error');
+        alertBox.style.display = 'block';
+        setTimeout(() => alertBox.style.display = 'none', 3000);
+    }
+
+    function getDb() {
+        return JSON.parse(localStorage.getItem('labAppUsers') || '{}');
+    }
+
+    function saveDb(db) {
+        localStorage.setItem('labAppUsers', JSON.stringify(db));
+    }
+
+    function register() {
+        const phone = document.getElementById('phone').value.trim();
+        const pwd = document.getElementById('password').value.trim();
+        
+        if (!phone || !pwd) return showAlert('Vyplňte telefon i heslo.');
+
+        let db = getDb();
+        if (db[phone]) return showAlert('Toto číslo je již registrováno.');
+
+        // Nový uživatel (simulace data registrace náhodně před 1-30 dny pro demo efekt, nebo právě teď)
+        // Pro lepší efekt v grafu posuneme datum registrace o pár dní zpět.
+        const demoPastMs = Math.floor(Math.random() * 15 + 5) * 24 * 60 * 60 * 1000; 
+        
+        db[phone] = { 
+            password: pwd, 
+            regDate: Date.now() - demoPastMs
+        };
+        saveDb(db);
+
+        loginUser(phone, db[phone]);
+    }
+
+    function login() {
+        const phone = document.getElementById('phone').value.trim();
+        const pwd = document.getElementById('password').value.trim();
+        
+        if (!phone || !pwd) return showAlert('Vyplňte telefon i heslo.');
+
+        let db = getDb();
+        if (!db[phone] || db[phone].password !== pwd) {
+            return showAlert('Nesprávné číslo nebo heslo.');
+        }
+
+        loginUser(phone, db[phone]);
+    }
+
+    function loginUser(phone, userData) {
+        currentUser = { phone, regDate: userData.regDate };
+        localStorage.setItem('labAppActiveUser', JSON.stringify(currentUser));
+        document.getElementById('phone').value = '';
+        document.getElementById('password').value = '';
+        showDashboard();
+    }
+
+    function logout() {
+        localStorage.removeItem('labAppActiveUser');
+        currentUser = null;
+        cart = []; // Vymazat košík při odhlášení
+        updateCartBadge();
+        
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-auth').classList.add('active');
+        document.getElementById('bottom-nav').style.display = 'none';
+    }
+
+    /* --- NAVIGATION --- */
+    function switchTab(tab) {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById(`view-${tab}`).classList.add('active');
+
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        if (tab === 'dashboard') initCharts();
+        if (tab === 'cart') renderCart();
+    }
+
+    function showDashboard() {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-dashboard').classList.add('active');
+        document.getElementById('bottom-nav').style.display = 'flex';
+        
+        // Reset nav icons
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelector('.nav-item:nth-child(1)').classList.add('active');
+
+        // Stats calculation
+        document.getElementById('dash-phone').textContent = currentUser.phone;
+        const days = Math.floor((Date.now() - currentUser.regDate) / (1000 * 60 * 60 * 24));
+        document.getElementById('dash-days').textContent = days;
+        
+        // Výdělek roste konzistentně s dny (simulace: 150 Kč za den + základ 500)
+        const earnings = 500 + (days * 150);
+        document.getElementById('dash-earnings').textContent = earnings.toLocaleString('cs-CZ');
+
+        // Init charts po malém zpoždění pro renderování DOM
+        setTimeout(initCharts, 100);
+    }
+
+    /* --- CHARTS (Chart.js) --- */
+    function initCharts() {
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.font.family = "'Segoe UI', Roboto, sans-serif";
+
+        const days = Math.floor((Date.now() - currentUser.regDate) / (1000 * 60 * 60 * 24));
+
+        // Zničení starých instancí, pokud existují
+        if (sharesChartInstance) sharesChartInstance.destroy();
+        if (earningsChartInstance) earningsChartInstance.destroy();
+
+        // 1. Graf vývoje akcií (generická rostoucí křivka)
+        const ctxShares = document.getElementById('sharesChart').getContext('2d');
+        sharesChartInstance = new Chart(ctxShares, {
+            type: 'line',
+            data: {
+                labels: ['Q1 22', 'Q3 22', 'Q1 23', 'Q3 23', 'Q1 24', 'Nyní'],
+                datasets: [{
+                    label: 'Hodnota (Kč/akcie)',
+                    data: [120, 145, 130, 210, 280, 315],
+                    borderColor: '#00d2ff',
+                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: false, grid: { color: '#333' } }, x: { grid: { color: '#333' } } }
+            }
+        });
+
+        // 2. Graf výdělku uživatele
+        const earnData = [];
+        const earnLabels = [];
+        for (let i = 0; i <= days; i += Math.max(1, Math.floor(days/5))) {
+            earnLabels.push(`Den ${i}`);
+            earnData.push(500 + (i * 150));
+        }
+        
+        const ctxEarnings = document.getElementById('earningsChart').getContext('2d');
+        earningsChartInstance = new Chart(ctxEarnings, {
+            type: 'bar',
+            data: {
+                labels: earnLabels,
+                datasets: [{
+                    label: 'Výdělek (Kč)',
+                    data: earnData,
+                    backgroundColor: '#00e676',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: '#333' } }, x: { grid: { display: false } } }
+            }
+        });
+    }
+
+    /* --- SHOP & CART --- */
+    function renderShop() {
+        const container = document.getElementById('products-container');
+        container.innerHTML = '';
+        
+        products.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img src="${p.img}" alt="${p.name}" class="product-img">
+                <div class="product-info">
+                    <h3>${p.name}</h3>
+                    <div class="product-price">${p.price} Kč</div>
+                    <button onclick="addToCart(${p.id})">Přidat do košíku</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function addToCart(id) {
+        const product = products.find(p => p.id === id);
+        cart.push(product);
+        updateCartBadge();
+        
+        // Malý feedback
+        const btn = event.currentTarget;
+        const oldText = btn.innerText;
+        btn.innerText = "Přidáno ✓";
+        btn.style.background = "var(--success)";
+        setTimeout(() => {
+            btn.innerText = oldText;
+            btn.style.background = "";
+        }, 1000);
+    }
+
+    function updateCartBadge() {
+        const badge = document.getElementById('cart-badge');
+        if (cart.length > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = cart.length;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cart-container');
+        const summary = document.getElementById('cart-summary');
+        const msg = document.getElementById('order-msg');
+        
+        msg.style.display = 'none';
+        container.innerHTML = '';
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-basket-shopping" style="font-size: 3em; margin-bottom:10px;"></i><p>Váš košík je prázdný.</p></div>';
+            summary.style.display = 'none';
+            return;
+        }
+
+        let total = 0;
+        cart.forEach((p, index) => {
+            total += p.price;
+            const item = document.createElement('div');
+            item.className = 'cart-item';
+            item.innerHTML = `
+                <div>
+                    <strong>${p.name}</strong><br>
+                    <span style="color: var(--success);">${p.price} Kč</span>
+                </div>
+                <button class="danger" style="width: auto; padding: 8px 15px; margin: 0;" onclick="removeFromCart(${index})">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(item);
+        });
+
+        document.getElementById('cart-total-price').textContent = total.toLocaleString('cs-CZ');
+        summary.style.display = 'block';
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCartBadge();
+        renderCart();
+    }
+
+    function submitOrder() {
+        const msg = document.getElementById('order-msg');
+        msg.textContent = "Objednávka přijata. Odhadovaná doba doručení: 14–28 dní.";
+        msg.style.display = 'block';
+        
+        // Vyprázdnění košíku
+        cart = [];
+        updateCartBadge();
+        
+        // Překreslení po 3 sekundách
+        setTimeout(() => {
+            renderCart();
+        }, 3000);
+    }
+
+    /* --- SUPPORT CHAT --- */
+    function handleChatEnter(e) {
+        if (e.key === 'Enter') sendMsg();
+    }
+
+    function sendMsg() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const chatBox = document.getElementById('chat-messages');
+        
+        // User message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'msg user';
+        userDiv.textContent = text;
+        chatBox.appendChild(userDiv);
+        
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Bot simulation
+        setTimeout(() => {
+            const botDiv = document.createElement('div');
+            botDiv.className = 'msg bot';
+            botDiv.innerHTML = 'Děkujeme za dotaz. Operátor se vám bude věnovat co nejdříve. <br><br><i>(Toto je automatická odpověď demo verze)</i>';
+            chatBox.appendChild(botDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 1000);
+    }
+
+</script>
+</body>
+</html>
