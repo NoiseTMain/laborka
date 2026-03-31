@@ -379,6 +379,50 @@
             border-radius: 15px;
             padding: 10px;
         }
+
+        /* =========================================
+           NOVÉ STYLY PRO MODAL DORUČOVACÍ ADRESY
+           ========================================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            width: 90%;
+            max-width: 400px;
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 10px;
+            font-size: 1.4em;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-disabled {
+            background: #333 !important;
+            color: #777 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
     </style>
 </head>
 <body>
@@ -505,6 +549,8 @@
         <div id="cart-items-list">
             </div>
         
+        <div id="cart-address-container" style="display: none; margin-top: 20px;"></div>
+
         <div id="cart-checkout-area" style="display: none; margin-top: 40px;">
             <div style="display: flex; justify-content: space-between; font-size: 1.4em; font-weight: 800; margin-bottom: 25px; padding: 0 10px;">
                 <span>CELKEM:</span>
@@ -567,6 +613,43 @@
         </div>
     </div>
 
+    <div id="address-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2><i class="fa-solid fa-map-location-dot" style="color: var(--primary-color);"></i> Doručovací adresa</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.8em; margin-bottom: 20px;">
+                Tato adresa bude pevně spjata s vaším účtem a nelze ji později změnit.
+            </p>
+            <input type="hidden" id="addr-phone">
+            
+            <div class="form-group" style="margin-bottom: 12px;">
+                <span class="form-label">Jméno a příjmení *</span>
+                <input type="text" id="addr-name" class="input-control" placeholder="Např. Jan Novák">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <span class="form-label">Ulice a č.p. *</span>
+                <input type="text" id="addr-street" class="input-control" placeholder="Např. Laboratorní 123">
+            </div>
+            <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <div style="flex: 2;">
+                    <span class="form-label">Město *</span>
+                    <input type="text" id="addr-city" class="input-control" placeholder="Např. Praha">
+                </div>
+                <div style="flex: 1;">
+                    <span class="form-label">PSČ *</span>
+                    <input type="text" id="addr-zip" class="input-control" placeholder="10000">
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 25px;">
+                <span class="form-label">Stát (volitelné)</span>
+                <input type="text" id="addr-country" class="input-control" value="Česká republika">
+            </div>
+
+            <button id="btn-save-address" class="btn-action btn-main btn-disabled" onclick="saveUserAddress()" disabled>
+                <i class="fa-solid fa-floppy-disk"></i> ULOŽIT ADRESU
+            </button>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -603,6 +686,9 @@
         };
         localStorage.setItem('lab_system_users', JSON.stringify(database));
         alert("Registrace úspěšná! Nyní se přihlaste.");
+        
+        // UPRAVENO: Ihned po registraci se vyvolá povinné nastavení adresy
+        openAddressModal(phone);
     }
 
     /* --- Funkce: Přihlášení uživatele --- */
@@ -989,6 +1075,120 @@
         
         // Zavolání původního kódu (zobrazí se alert, košík se smaže a přesměruje se na dashboard)
         originalProcessOrderCheckoutFunc(); 
+    };
+
+    /* =========================================================================
+       ZCELA NOVÁ SEKCE: LOGIKA DORUČOVACÍ ADRESY
+       ========================================================================= */
+
+    // Otevření okna ihned po registraci
+    function openAddressModal(userPhone) {
+        document.getElementById('addr-phone').value = userPhone;
+        document.getElementById('address-modal').style.display = 'flex';
+        
+        // Vyčistit případné předchozí vstupy
+        document.getElementById('addr-name').value = '';
+        document.getElementById('addr-street').value = '';
+        document.getElementById('addr-city').value = '';
+        document.getElementById('addr-zip').value = '';
+        document.getElementById('addr-country').value = 'Česká republika';
+        
+        checkAddressForm(); // Inicializovat stav tlačítka
+    }
+
+    // Validace povinných polí v modalu
+    function checkAddressForm() {
+        const name = document.getElementById('addr-name').value.trim();
+        const street = document.getElementById('addr-street').value.trim();
+        const city = document.getElementById('addr-city').value.trim();
+        const zip = document.getElementById('addr-zip').value.trim();
+        const btn = document.getElementById('btn-save-address');
+
+        if (name !== '' && street !== '' && city !== '' && zip !== '') {
+            btn.classList.remove('btn-disabled');
+            btn.removeAttribute('disabled');
+        } else {
+            btn.classList.add('btn-disabled');
+            btn.setAttribute('disabled', 'true');
+        }
+    }
+
+    // Propojení event listenerů pro validaci vstupů v reálném čase
+    ['addr-name', 'addr-street', 'addr-city', 'addr-zip'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', checkAddressForm);
+    });
+
+    // Uložení adresy do existujícího uživatelského záznamu
+    function saveUserAddress() {
+        const phone = document.getElementById('addr-phone').value;
+        const addressData = {
+            name: document.getElementById('addr-name').value.trim(),
+            street: document.getElementById('addr-street').value.trim(),
+            city: document.getElementById('addr-city').value.trim(),
+            zip: document.getElementById('addr-zip').value.trim(),
+            country: document.getElementById('addr-country').value.trim() || 'Česká republika'
+        };
+
+        let database = JSON.parse(localStorage.getItem('lab_system_users') || '{}');
+        if (database[phone]) {
+            database[phone].address = addressData;
+            localStorage.setItem('lab_system_users', JSON.stringify(database));
+        }
+
+        document.getElementById('address-modal').style.display = 'none';
+        
+        // Vizuální zpětná vazba pro přepnutí do sekce přihlášení
+        const box = document.getElementById('auth-msg-box');
+        box.textContent = "Adresa úspěšně uzamčena. Nyní se můžete přihlásit.";
+        box.style.display = 'block';
+        box.style.background = "rgba(0, 230, 118, 0.1)";
+        box.style.color = "var(--accent-color)";
+        box.style.borderColor = "var(--accent-color)";
+        setTimeout(() => {
+            box.style.display = 'none';
+            box.style.background = "rgba(255,76,76,0.1)"; // Reset zpět na styl erroru pro běžný login
+            box.style.color = "var(--danger)";
+            box.style.borderColor = "var(--danger)";
+        }, 5000);
+    }
+
+    // Hook na původní renderCartItems pro zobrazení read-only adresy
+    const originalRenderCartItemsForAddress = renderCartItems;
+    renderCartItems = function() {
+        originalRenderCartItemsForAddress(); // Vykreslí samotný košík
+
+        const addrContainer = document.getElementById('cart-address-container');
+        if (!addrContainer) return;
+
+        // Adresu vykreslíme pouze, pokud je košík aktivní (uživatel vybírá na checkout)
+        if (userCart.length > 0 && activeUser) {
+            let database = JSON.parse(localStorage.getItem('lab_system_users') || '{}');
+            let userRecord = database[activeUser.phone];
+            
+            if (userRecord && userRecord.address) {
+                const a = userRecord.address;
+                addrContainer.innerHTML = `
+                    <div style="background: var(--surface-light); border: 1px solid #333; border-radius: 16px; padding: 18px; margin-bottom: 25px;">
+                        <h4 style="color: var(--text-muted); text-transform: uppercase; font-size: 0.75em; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            Doručovací adresa
+                            <span style="color: var(--danger); font-size: 0.9em; font-weight: bold;"><i class="fa-solid fa-lock"></i> Nelze změnit</span>
+                        </h4>
+                        <div style="color: white; font-size: 0.95em; line-height: 1.5;">
+                            <strong style="font-size: 1.1em; display: inline-block; margin-bottom: 4px;">${a.name}</strong><br>
+                            ${a.street}<br>
+                            ${a.zip} ${a.city}<br>
+                            ${a.country}
+                        </div>
+                    </div>
+                `;
+                addrContainer.style.display = 'block';
+            } else {
+                addrContainer.style.display = 'none';
+            }
+        } else {
+            addrContainer.style.display = 'none';
+        }
     };
 </script>
 
