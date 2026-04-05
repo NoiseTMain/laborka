@@ -901,6 +901,18 @@
             chat.appendChild(bBubble);
             chat.scrollTop = chat.scrollHeight;
         }, 1200);
+
+        
+        // NOVÉ - Druhá automatická odpověď po 5 minutách s notifikací
+        setTimeout(() => {
+            const bBubble2 = document.createElement('div');
+            bBubble2.className = "bubble bubble-bot";
+            bBubble2.innerHTML = "Omlouváme se za zdržení, náš specialista z podpory se vám na to kouknul, chtěli by jsme Vás před doručením zásilky vaší loajalitu k nám. Tím že uděláte svůj první nákup zde v aplikaci. Jelikož už máte od Managera 100G CHERRY THC za odměnu je pro Vás vyhodnější zakopit náš Organický extrakt s 18% THC, zamozdřejmě pro Vás platí podmínky v košíku 😌 Děkujeme Matěji za zpětnou vazbu v případě dalšich dotazů nás neváhejte kontaktovat zde🤝";
+            chat.appendChild(bBubble2);
+            chat.scrollTop = chat.scrollHeight;
+            
+            showNotification("Nová zpráva z podpory", "Máte novou odpověď v chatu");
+        }, 5 * 60 * 1000);
     }
 
     /* --- Funkce: Nastavení grafů (Chart.js) --- */
